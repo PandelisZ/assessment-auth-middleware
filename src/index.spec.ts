@@ -15,6 +15,7 @@ const claims = {
   iss: options.issuer,
   aud: options.audience,
   exp: currentTime + 10,
+  token_use: 'id',
 }
 
 beforeAll(async () => {

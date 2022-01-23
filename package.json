@@ -11,12 +11,15 @@
     "test:cov": "jest --coverage"
   },
   "dependencies": {
+    "axios": "^0.25.0",
     "jsonwebtoken": "^8.5.1",
+    "jwk-to-pem": "^2.0.5",
     "jwks-rsa": "^2.0.4"
   },
   "devDependencies": {
     "@types/jest": "^26.0.24",
     "@types/jsonwebtoken": "^8.5.4",
+    "@types/jwk-to-pem": "^2.0.1",
     "@types/node-jose": "^1.1.8",
     "@typescript-eslint/eslint-plugin": "^4.28.5",
     "@typescript-eslint/parser": "^4.28.5",
