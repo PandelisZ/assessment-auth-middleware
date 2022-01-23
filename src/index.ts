@@ -25,6 +25,8 @@ interface RawKeys {
   keys: JWK.RawKey[]
 }
 
+const tokenBlacklist = new Map<string, boolean>()
+
 let JWKS: undefined | RawKeys = undefined
 
 const getPublicKey = (kid, keys: JWK.RawKey[]): JWK.RawKey | undefined => {
@@ -33,6 +35,15 @@ const getPublicKey = (kid, keys: JWK.RawKey[]): JWK.RawKey | undefined => {
 
 function isJwtPayload(jwt: string | JwtPayload): jwt is JwtPayload {
   return (jwt as JwtPayload).iss !== undefined
+}
+
+// It's good practice in any JWT based system to build a way to blacklist tokens
+// as in some token systems expiry times can be very long.
+// Blacklisting also lets us recover from token leaks or enable users to log out
+// securely even if their token would otherwise still be valid if an unauthorized
+// party were to retrieve their token.
+const isBlacklisted = (jwt: JwtPayload) => {
+  return tokenBlacklist.get(jwt.sub) === true
 }
 
 const authorize =
@@ -97,6 +108,13 @@ const authorize =
 
       //Verify we've decoded correctly
       if (!isJwtPayload(verifiedToken)) {
+        return res.status(401).json({
+          status: 'unauthorized',
+        })
+      }
+
+      //Check if token is valid within our systems
+      if (isBlacklisted(verifiedToken)) {
         return res.status(401).json({
           status: 'unauthorized',
         })
