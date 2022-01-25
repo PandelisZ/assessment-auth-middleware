@@ -27,7 +27,7 @@ interface RawKeys {
 
 const tokenBlacklist = new Map<string, boolean>()
 
-let JWKS: undefined | RawKeys = undefined
+const JWKS: Record<string, RawKeys> = {}
 
 const getPublicKey = (kid, keys: JWK.RawKey[]): JWK.RawKey | undefined => {
   return keys.find((k: JWK.RawKey) => k.kid === kid)
@@ -64,13 +64,19 @@ const authorize =
     }
 
     //Cache the json web keys
-    if (JWKS === undefined) {
+    if (JWKS?.[issuer] === undefined) {
       try {
         const jwksPayload = await axios.get<RawKeys>(
           `${issuer.replace(/\/$/, '')}/.well-known/jwks.json`,
+          {
+            timeout: 2000,
+          },
         )
 
-        JWKS = jwksPayload.data
+        if (jwksPayload.status > 300) {
+          throw jwksPayload.statusText
+        }
+        JWKS[issuer] = jwksPayload.data
       } catch (e) {
         return next(
           new Error(
@@ -88,7 +94,7 @@ const authorize =
     }
 
     const userKey = decode(authorizationinfo, { complete: true })
-    const publicKey = getPublicKey(userKey.header.kid, JWKS.keys)
+    const publicKey = getPublicKey(userKey?.header?.kid, JWKS[issuer].keys)
     if (!publicKey) {
       return res.status(401).json({
         status: 'unauthorized',
